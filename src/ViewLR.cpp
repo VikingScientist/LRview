@@ -706,37 +706,37 @@ int main(int argc, char **argv) {
 		elFaces[k++] = i*8 + 7 + elementSetSize*2;
 		elFaces[k++] = i*8 + 6 + elementSetSize*2;
 
-		if(lr.getElement(i)->getParmin(0) == lr.startparam_u()) {
+		if(lr.getElement(i)->getParmin(0) == lr.startparam(0)) {
 			shellEl.push_back(i*8 + 0 + elementSetSize);
 			shellEl.push_back(i*8 + 2 + elementSetSize);
 			shellEl.push_back(i*8 + 6 + elementSetSize);
 			shellEl.push_back(i*8 + 4 + elementSetSize);
 		}
-		if(lr.getElement(i)->getParmin(1) == lr.startparam_v()) {
+		if(lr.getElement(i)->getParmin(1) == lr.startparam(1)) {
 			shellEl.push_back(i*8 + 0 + elementSetSize*2);
 			shellEl.push_back(i*8 + 1 + elementSetSize*2);
 			shellEl.push_back(i*8 + 5 + elementSetSize*2);
 			shellEl.push_back(i*8 + 4 + elementSetSize*2);
 		}
-		if(lr.getElement(i)->getParmin(2) == lr.startparam_w()) {
+		if(lr.getElement(i)->getParmin(2) == lr.startparam(2)) {
 			shellEl.push_back(i*8 + 0);
 			shellEl.push_back(i*8 + 1);
 			shellEl.push_back(i*8 + 3);
 			shellEl.push_back(i*8 + 2);
 		}
-		if(lr.getElement(i)->getParmax(0) == lr.endparam_u()) {
+		if(lr.getElement(i)->getParmax(0) == lr.endparam(0)) {
 			shellEl.push_back(i*8 + 1 + elementSetSize);
 			shellEl.push_back(i*8 + 3 + elementSetSize);
 			shellEl.push_back(i*8 + 7 + elementSetSize);
 			shellEl.push_back(i*8 + 5 + elementSetSize);
 		}
-		if(lr.getElement(i)->getParmax(1) == lr.endparam_v()) {
+		if(lr.getElement(i)->getParmax(1) == lr.endparam(1)) {
 			shellEl.push_back(i*8 + 2 + elementSetSize*2);
 			shellEl.push_back(i*8 + 3 + elementSetSize*2);
 			shellEl.push_back(i*8 + 7 + elementSetSize*2);
 			shellEl.push_back(i*8 + 6 + elementSetSize*2);
 		}
-		if(lr.getElement(i)->getParmax(2) == lr.endparam_w()) {
+		if(lr.getElement(i)->getParmax(2) == lr.endparam(2)) {
 			shellEl.push_back(i*8 + 4);
 			shellEl.push_back(i*8 + 5);
 			shellEl.push_back(i*8 + 7);
