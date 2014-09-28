@@ -55,6 +55,7 @@ bool drawBlinkingEl      = true;
 bool drawBlinkingRect    = false;
 bool drawSolidEdges      = false;
 bool doRotation          = true;
+bool whiteBG             = false;
 
 // blinking rectangles and elements
 vector<Rect> viewEl;
@@ -93,7 +94,8 @@ void drawScene() {
 
 	glEnableClientState(GL_VERTEX_ARRAY);
 
-	cam.paintBackground();
+	if(!whiteBG)
+		cam.paintBackground();
 	cam.setProjection();
 	cam.setModelView();
 
@@ -366,9 +368,21 @@ void handleKeypress(unsigned char key, int x, int y) {
 	if(key == 'r') {
 		drawRectangles = !drawRectangles;
 		cout << "Drawing meshrectangles: " << drawRectangles << endl;
+	} else if (key == 'h') {
+		cout << "[R] - draw meshrectangles" << endl;
+		cout << "[E] - draw elements" << endl;
+		cout << "[B] - change background" << endl;
+		cout << "[S] - start/stop rotation" << endl;
+		cout << "[1] - start/stop blinking elements" << endl;
+		cout << "[2] - start/stop blinking meshrectangles" << endl;
+		cout << "[3] - show solid edges" << endl;
+		cout << "[Q] - Quit" << endl;
 	} else if (key == 'e') {
 		drawElements = !drawElements;
 		cout << "Drawing elements: " << drawElements << endl;
+	} else if (key == 'b') {
+		whiteBG = !whiteBG;
+		cout << "White background: " << whiteBG << endl;
 	} else if (key == 's') {
 		doRotation = !doRotation;
 		cout << "Auto rotating: " << doRotation << endl;
@@ -402,7 +416,7 @@ void processMousePassiveMotion(int x, int y) {
 void initRendering() {
 
 	// standard stuff
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 	glEnable(GL_NORMALIZE);
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
@@ -417,6 +431,12 @@ void initRendering() {
 	// setup transparency
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	// setup smooth lines and anti-aliasing
+	glEnable( GL_LINE_SMOOTH );
+	glEnable( GL_POLYGON_SMOOTH );
+	glHint( GL_LINE_SMOOTH_HINT, GL_NICEST );
+	glEnable( GL_MULTISAMPLE_ARB );
 
 	// setup camera
 	cam.setPos(cam_dist,phi,theta);
@@ -750,7 +770,7 @@ int main(int argc, char **argv) {
 	// initalize GLUT
 	int glArgc = 0;
 	glutInit(&glArgc, NULL);
-	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH | GLUT_MULTISAMPLE);
 	glutInitWindowSize(window_width, window_height);
 
 	
