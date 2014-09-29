@@ -54,6 +54,9 @@ bool drawFaces           = false;
 bool drawBlinkingEl      = true;
 bool drawBlinkingRect    = false;
 bool drawSolidEdges      = false;
+bool drawX               = false;
+bool drawY               = false;
+bool drawZ               = false;
 bool doRotation          = true;
 bool whiteBG             = false;
 
@@ -68,11 +71,17 @@ double min_alpha   = 0.0;
 double max_alpha   = 1.0;
 
 // data buffers
-int nRect, nEl;
+int nRect, nEl, nRectX, nRectY, nRectZ;
 GLuint *elLines;
 GLuint *elFaces;
 GLuint *rectLines;
+GLuint *rectLinesX;
+GLuint *rectLinesY;
+GLuint *rectLinesZ;
 GLuint *rectFaces;
+GLuint *rectFacesX;
+GLuint *rectFacesY;
+GLuint *rectFacesZ;
 double *rectCoord;
 double *rectNormal;
 double *rectColor;
@@ -117,6 +126,38 @@ void drawScene() {
 		glVertexPointer(3, GL_DOUBLE, 0, rectCoord);
 		glDrawElements(GL_LINES, nRect*4*2, GL_UNSIGNED_INT, rectLines);
 	}
+
+	glEnable(GL_LIGHTING);
+	glEnable(GL_NORMAL_ARRAY);
+	if(drawX) {
+		glColor3f(0.8f, 0.67f, 0.2f);
+		glVertexPointer(3, GL_DOUBLE, 0, rectCoord);
+		glNormalPointer(   GL_DOUBLE, 0, rectNormal);
+		glDrawElements(GL_QUADS, nRectX*4, GL_UNSIGNED_INT, rectFacesX);
+	}
+	if(drawY) {
+		glColor3f(0.2f, 0.8f, 0.67f);
+		glVertexPointer(3, GL_DOUBLE, 0, rectCoord);
+		glNormalPointer(   GL_DOUBLE, 0, rectNormal);
+		glDrawElements(GL_QUADS, nRectY*4, GL_UNSIGNED_INT, rectFacesY);
+	}
+	if(drawZ) {
+		glColor3f(0.67f, 0.2f, 0.8f);
+		glVertexPointer(3, GL_DOUBLE, 0, rectCoord);
+		glNormalPointer(   GL_DOUBLE, 0, rectNormal);
+		glDrawElements(GL_QUADS, nRectZ*4, GL_UNSIGNED_INT, rectFacesZ);
+	}
+	glDisable(GL_NORMAL_ARRAY);
+	glDisable(GL_LIGHTING);
+
+	glColor3f(0, 0, 0);
+	glVertexPointer(3, GL_DOUBLE, 0, rectCoord);
+	if(drawX)
+		glDrawElements(GL_LINES, nRectX*4*2, GL_UNSIGNED_INT, rectLinesX);
+	if(drawY)
+		glDrawElements(GL_LINES, nRectY*4*2, GL_UNSIGNED_INT, rectLinesY);
+	if(drawZ)
+		glDrawElements(GL_LINES, nRectZ*4*2, GL_UNSIGNED_INT, rectLinesZ);
 	
 	if(drawElements) {
 		glLineWidth(1);
@@ -370,6 +411,9 @@ void handleKeypress(unsigned char key, int x, int y) {
 		cout << "Drawing meshrectangles: " << drawRectangles << endl;
 	} else if (key == 'h') {
 		cout << "[R] - draw meshrectangles" << endl;
+		cout << "[X] - draw meshrectangles in yz-plane" << endl;
+		cout << "[Y] - draw meshrectangles in xz-plane" << endl;
+		cout << "[Z] - draw meshrectangles in xy-plane" << endl;
 		cout << "[E] - draw elements" << endl;
 		cout << "[B] - change background" << endl;
 		cout << "[S] - start/stop rotation" << endl;
@@ -377,6 +421,15 @@ void handleKeypress(unsigned char key, int x, int y) {
 		cout << "[2] - start/stop blinking meshrectangles" << endl;
 		cout << "[3] - show solid edges" << endl;
 		cout << "[Q] - Quit" << endl;
+	} else if (key == 'x') {
+		drawX = !drawX;
+		cout << "Drawing yz-rectangles: " << drawX << endl;
+	} else if (key == 'y') {
+		drawY = !drawY;
+		cout << "Drawing xz-rectangles: " << drawY << endl;
+	} else if (key == 'z') {
+		drawZ = !drawZ;
+		cout << "Drawing xy-rectangles: " << drawZ << endl;
 	} else if (key == 'e') {
 		drawElements = !drawElements;
 		cout << "Drawing elements: " << drawElements << endl;
@@ -527,6 +580,10 @@ int main(int argc, char **argv) {
 	int j=0;
 	int k=0;
 	int l=0;
+	int n=0;
+	vector<int> constX;
+	vector<int> constY;
+	vector<int> constZ;
 
 	for(MeshRectangle* m : lr.getAllMeshRectangles() ) {
 		double x1 = m->start_[0];
@@ -535,6 +592,9 @@ int main(int argc, char **argv) {
 		double x2 = m->stop_[0];
 		double y2 = m->stop_[1];
 		double z2 = m->stop_[2];
+		if(fabs(x1-x2)     <1e-10) constX.push_back(n++);
+		else if(fabs(y1-y2)<1e-10) constY.push_back(n++);
+		else if(fabs(z1-z2)<1e-10) constZ.push_back(n++);
 		rectCoord[k++] = x1;    rectCoord[k++] = y1;   rectCoord[k++] = z1;
 		if(m->constDirection() == 0) {
 			rectCoord[k++] = x1;    rectCoord[k++] = y2;   rectCoord[k++] = z1;
@@ -560,17 +620,22 @@ int main(int argc, char **argv) {
 			rectColor[l++] = b;
 			rectColor[l++] = min_alpha;
 		}
-
-/*
-		rectColor[l++] = 0.6313726;
-		rectColor[l++] = 0.5058824;
-		rectColor[l++] = 0.3137255;
-		rectColor[l++] = min_alpha;
-*/
 	}
+
+	nRectX     = constX.size();
+	nRectY     = constY.size();
+	nRectZ     = constZ.size();
+	rectFacesX = new GLuint[constX.size()*4];
+	rectFacesY = new GLuint[constY.size()*4];
+	rectFacesZ = new GLuint[constZ.size()*4];
+	rectLinesX = new GLuint[constX.size()*4*2];
+	rectLinesY = new GLuint[constY.size()*4*2];
+	rectLinesZ = new GLuint[constZ.size()*4*2];
 
 	j=0;
 	k=0;
+	int kx=0, ky=0, kz=0;
+	int jx=0, jy=0, jz=0;
 	for(int i=0; i<nRect; i++) {
 		rectLines[j++] = i*4;
 		rectLines[j++] = i*4 + 1;
@@ -585,6 +650,28 @@ int main(int argc, char **argv) {
 		rectFaces[k++] = i*4+1;
 		rectFaces[k++] = i*4+2;
 		rectFaces[k++] = i*4+3;
+	}
+
+	for(int i : constX) {
+		rectFacesX[kx++] = i*4  ;   rectLinesX[jx++] = i*4  ;
+		rectFacesX[kx++] = i*4+1;   rectLinesX[jx++] = i*4+1;   rectLinesX[jx++] = i*4+1;
+		rectFacesX[kx++] = i*4+2;   rectLinesX[jx++] = i*4+2;   rectLinesX[jx++] = i*4+2;
+		rectFacesX[kx++] = i*4+3;   rectLinesX[jx++] = i*4+3;   rectLinesX[jx++] = i*4+3;
+		                            rectLinesX[jx++] = i*4  ;                            
+	}
+	for(int i : constY) {
+		rectFacesY[ky++] = i*4  ;   rectLinesY[jy++] = i*4  ;
+		rectFacesY[ky++] = i*4+1;   rectLinesY[jy++] = i*4+1;   rectLinesY[jy++] = i*4+1;
+		rectFacesY[ky++] = i*4+2;   rectLinesY[jy++] = i*4+2;   rectLinesY[jy++] = i*4+2;
+		rectFacesY[ky++] = i*4+3;   rectLinesY[jy++] = i*4+3;   rectLinesY[jy++] = i*4+3;
+                                    rectLinesY[jy++] = i*4  ;                            
+	}
+	for(int i : constZ) {
+		rectFacesZ[kz++] = i*4  ;   rectLinesZ[jz++] = i*4  ;
+		rectFacesZ[kz++] = i*4+1;   rectLinesZ[jz++] = i*4+1;   rectLinesZ[jz++] = i*4+1;
+		rectFacesZ[kz++] = i*4+2;   rectLinesZ[jz++] = i*4+2;   rectLinesZ[jz++] = i*4+2;
+		rectFacesZ[kz++] = i*4+3;   rectLinesZ[jz++] = i*4+3;   rectLinesZ[jz++] = i*4+3;
+                                    rectLinesZ[jz++] = i*4  ;                            
 	}
 
 	nEl = lr.nElements();
