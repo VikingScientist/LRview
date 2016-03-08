@@ -54,6 +54,7 @@ bool drawFaces           = false;
 bool drawBlinkingEl      = true;
 bool drawBlinkingRect    = false;
 bool drawSolidEdges      = false;
+bool showInner           = true;
 bool drawX               = false;
 bool drawY               = false;
 bool drawZ               = false;
@@ -86,6 +87,7 @@ double *rectCoord;
 double *rectNormal;
 double *rectColor;
 double *elCoord;
+double *elCoord2;
 double *elNormal;
 double *elColor;
 vector<GLuint> shellEl;
@@ -109,23 +111,15 @@ void drawScene() {
 	cam.setModelView();
 
 	// draw the axis cross
-	glLineWidth(3);
-	glBegin(GL_LINES);
-		glColor3f(1,0,0);
-		glVertex3f(0,0,0); glVertex3f(1,0,0);
-		glColor3f(0,1,0);
-		glVertex3f(0,0,0); glVertex3f(0,1,0);
-		glColor3f(0,0,1);
-		glVertex3f(0,0,0); glVertex3f(0,0,1);
-	glEnd();
-
-	// draw the ouline of the elements
-	if(drawRectangles) {
-		glLineWidth(2);
-		glColor3d(0.1, 0.1, 0.1);
-		glVertexPointer(3, GL_DOUBLE, 0, rectCoord);
-		glDrawElements(GL_LINES, nRect*4*2, GL_UNSIGNED_INT, rectLines);
-	}
+	//glLineWidth(3);
+	//glBegin(GL_LINES);
+		//glColor3f(1,0,0);
+		//glVertex3f(0,0,0); glVertex3f(1,0,0);
+		//glColor3f(0,1,0);
+		//glVertex3f(0,0,0); glVertex3f(0,1,0);
+		//glColor3f(0,0,1);
+		//glVertex3f(0,0,0); glVertex3f(0,0,1);
+	//glEnd();
 
 	glEnable(GL_LIGHTING);
 	glEnable(GL_NORMAL_ARRAY);
@@ -158,13 +152,6 @@ void drawScene() {
 		glDrawElements(GL_LINES, nRectY*4*2, GL_UNSIGNED_INT, rectLinesY);
 	if(drawZ)
 		glDrawElements(GL_LINES, nRectZ*4*2, GL_UNSIGNED_INT, rectLinesZ);
-	
-	if(drawElements) {
-		glLineWidth(1);
-		glColor3d(0.0, 0.0, 0.0);
-		glVertexPointer(3, GL_DOUBLE, 0, elCoord);
-		glDrawElements(GL_LINES, nEl*12*2, GL_UNSIGNED_INT, elLines);
-	}
 
 	glClear(GL_DEPTH_BUFFER_BIT);
 
@@ -202,9 +189,12 @@ void drawScene() {
 	}
 	
 	if(drawElements) {
-		glLineWidth(1);
+		glLineWidth(2);
 		glColor3d(0.0, 0.0, 0.0);
-		glVertexPointer(3, GL_DOUBLE, 0, elCoord);
+		if(showInner)
+			glVertexPointer(3, GL_DOUBLE, 0, elCoord);
+		else
+			glVertexPointer(3, GL_DOUBLE, 0, elCoord2);
 		glDrawElements(GL_LINES, nEl*12*2, GL_UNSIGNED_INT, elLines);
 	}
 
@@ -212,7 +202,10 @@ void drawScene() {
 		glEnable(GL_LIGHTING);
 		glEnableClientState(GL_NORMAL_ARRAY);
 		glColor3f(0.6313726, 0.5058824, 0.3137255);
-		glVertexPointer(3, GL_DOUBLE, 0, elCoord);
+		if(showInner)
+			glVertexPointer(3, GL_DOUBLE, 0, elCoord);
+		else
+			glVertexPointer(3, GL_DOUBLE, 0, elCoord2);
 		glNormalPointer(   GL_DOUBLE, 0, elNormal);
 		glDrawElements(GL_QUADS, shellEl.size(), GL_UNSIGNED_INT, &(shellEl[0]));
 		glDisableClientState(GL_NORMAL_ARRAY);
@@ -417,6 +410,7 @@ void handleKeypress(unsigned char key, int x, int y) {
 		cout << "[E] - draw elements" << endl;
 		cout << "[B] - change background" << endl;
 		cout << "[S] - start/stop rotation" << endl;
+		cout << "[F] - flip side to view" << endl;
 		cout << "[1] - start/stop blinking elements" << endl;
 		cout << "[2] - start/stop blinking meshrectangles" << endl;
 		cout << "[3] - show solid edges" << endl;
@@ -433,6 +427,9 @@ void handleKeypress(unsigned char key, int x, int y) {
 	} else if (key == 'e') {
 		drawElements = !drawElements;
 		cout << "Drawing elements: " << drawElements << endl;
+	} else if (key == 'f') {
+		showInner = !showInner;
+		cout << "Show inside : " << showInner << endl;
 	} else if (key == 'b') {
 		whiteBG = !whiteBG;
 		cout << "White background: " << whiteBG << endl;
@@ -676,6 +673,7 @@ int main(int argc, char **argv) {
 
 	nEl = lr.nElements();
 	elCoord  = new double[nEl*8*3*3]; 
+	elCoord2 = new double[nEl*8*3*3]; 
 	elNormal = new double[nEl*8*3*3];
 	elColor  = new double[nEl*8*4*3];
 	elLines  = new GLuint[nEl*12*2];
@@ -684,6 +682,7 @@ int main(int argc, char **argv) {
 	j = 0;
 	k = 0;
 	l = 0;
+	n = 0;
 	int elementSetSize = nEl*8;
 	for(int normalDir=0; normalDir<3; normalDir++) {
 		for( Element *el : lr.getAllElements() ) {
@@ -694,6 +693,24 @@ int main(int argc, char **argv) {
 			double y2 = el->getParmax(1);
 			double z2 = el->getParmax(2);
 
+			if(x1<=y1) elCoord[k++] = x1; else elCoord[k++] = y1; elCoord[k++] = y1;  elCoord[k++] = z1;
+			if(x2<=y1) elCoord[k++] = x2; else elCoord[k++] = y1; elCoord[k++] = y1;  elCoord[k++] = z1;
+			if(x1<=y2) elCoord[k++] = x1; else elCoord[k++] = y2; elCoord[k++] = y2;  elCoord[k++] = z1;
+			if(x2<=y2) elCoord[k++] = x2; else elCoord[k++] = y2; elCoord[k++] = y2;  elCoord[k++] = z1;
+			if(x1<=y1) elCoord[k++] = x1; else elCoord[k++] = y1; elCoord[k++] = y1;  elCoord[k++] = z2;
+			if(x2<=y1) elCoord[k++] = x2; else elCoord[k++] = y1; elCoord[k++] = y1;  elCoord[k++] = z2;
+			if(x1<=y2) elCoord[k++] = x1; else elCoord[k++] = y2; elCoord[k++] = y2;  elCoord[k++] = z2;
+			if(x2<=y2) elCoord[k++] = x2; else elCoord[k++] = y2; elCoord[k++] = y2;  elCoord[k++] = z2;
+
+			if(x1>=y1) elCoord2[n++] = x1; else elCoord2[n++] = y1; elCoord2[n++] = y1;  elCoord2[n++] = z1;
+			if(x2>=y1) elCoord2[n++] = x2; else elCoord2[n++] = y1; elCoord2[n++] = y1;  elCoord2[n++] = z1;
+			if(x1>=y2) elCoord2[n++] = x1; else elCoord2[n++] = y2; elCoord2[n++] = y2;  elCoord2[n++] = z1;
+			if(x2>=y2) elCoord2[n++] = x2; else elCoord2[n++] = y2; elCoord2[n++] = y2;  elCoord2[n++] = z1;
+			if(x1>=y1) elCoord2[n++] = x1; else elCoord2[n++] = y1; elCoord2[n++] = y1;  elCoord2[n++] = z2;
+			if(x2>=y1) elCoord2[n++] = x2; else elCoord2[n++] = y1; elCoord2[n++] = y1;  elCoord2[n++] = z2;
+			if(x1>=y2) elCoord2[n++] = x1; else elCoord2[n++] = y2; elCoord2[n++] = y2;  elCoord2[n++] = z2;
+			if(x2>=y2) elCoord2[n++] = x2; else elCoord2[n++] = y2; elCoord2[n++] = y2;  elCoord2[n++] = z2;
+/*
 			elCoord[k++] = x1;  elCoord[k++] = y1;  elCoord[k++] = z1;
 			elCoord[k++] = x2;  elCoord[k++] = y1;  elCoord[k++] = z1;
 			elCoord[k++] = x1;  elCoord[k++] = y2;  elCoord[k++] = z1;
@@ -702,6 +719,7 @@ int main(int argc, char **argv) {
 			elCoord[k++] = x2;  elCoord[k++] = y1;  elCoord[k++] = z2;
 			elCoord[k++] = x1;  elCoord[k++] = y2;  elCoord[k++] = z2;
 			elCoord[k++] = x2;  elCoord[k++] = y2;  elCoord[k++] = z2;
+*/
 
 			// trust me... it's right. Completely unreadable, but right.
 			// the idea is to make 3 sets of complete cube coordinates. Corresponding to
